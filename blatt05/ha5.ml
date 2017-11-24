@@ -88,7 +88,6 @@ let rec compute_sum l =
   match l with [] -> 0
              | x::xs -> x + compute_sum xs;; (*Einfügen eines '|'*)
 
-
 (*
 * double_elems fügt nach jedem Element eine Kopie des Elements in die Liste ein
 * Beispiel:
@@ -106,15 +105,14 @@ let rec double_elems =
 * - Eingabe: 3 [3;7;19;-4]
 * - Ausgabe: 2
 *)
-let count_greater = todo
-(*
+
 let count_greater v l =
-let rec impl c =
-function [] -> d
-| x::xs -> if x > v then impl c+1 xs else impl c xs
-in
-impl 0 l
-*)
+  let rec impl c =
+    function [] -> c (*changed d to c*)
+           | x::xs -> if x > v then impl (c+1) xs else impl c xs (*added brackets to c+1*)
+  in
+    impl 0 l;;
+
 
 (*
 * gen_seq erzeugt eine Liste von aufsteigenden Zahlen
@@ -122,25 +120,21 @@ impl 0 l
 * - Eingabe: 6
 * - Ausgabe: [0;1;2;3;4;5;6]
 *)
-let rec gen_seq = todo
-(*
+
 let rec gen_seq n =
-let rec impl k
-if k = n then k else k :: impl (k+1)
-in
-impl 0
-*)
+  let rec impl k =  (*added the '='*)
+    if k = n then [k] else k :: impl (k+1) (*changed k to [k]*)
+  in
+    impl 0;;
 
 (* add_half addiert 0.5 zu allen Werten der Liste (diese müssen dazu in float umgewandelt werden)
  * Beispiel:
  * - Eingabe: [3;7;19;-4]
  * - Ausgabe: [3.5;7.5;19.5;-3.5]
 *)
-let add_half = todo
-(*
-let add_half l =
-| [] -> []
-| x::xs ->
-let x::xs = l in
-((float_of_int x) + 0.5) :: add_half xs
-*)
+
+let rec add_half = function (*made function recursive*)
+  | [] -> []
+  | x::xs -> (*removed the unnecessary 'let x::xs = l in'*)
+      ((float_of_int x) +. 0.5) :: add_half xs;; (*changed + to +.*)
+
