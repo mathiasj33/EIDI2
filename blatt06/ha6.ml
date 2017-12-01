@@ -31,42 +31,68 @@ module MyList = struct
         | xs -> Some (aux (float_of_int (length xs)) xs)
 
   (* list concatenation, same as @ (will be undefined in the test environment!) *)
-  let append a = todo
-  let (@) = append (* infix operator for append *)
-  (* palindrome ['a';'b'] = ['a';'b';'b';'a'] *)
-  let palindrome = todo
+  let rec append a b = match a with
+    | [] -> b
+    | x::xs -> x::(append xs b)
 
-  (* note the expected types in ha6.mli! *)
-(*
-* #show_type option;;
-* type nonrec 'a option = None | Some of 'a
-*)
-  (* optional first element. head [] = None, head [1;2] = Some 1 *)
-  let head = todo
-  (* optional rest, after first element. tail [] = tail [1] = None, tail [1;2] = Some [2] *)
-  let tail = todo
-  (* optional last element. last [] = None, last [1;2] = Some 2 *)
-  let last = todo
+  let (@) = append (* infix operator for append *)
 
   (* reverse a list *)
-  let reverse = todo
+  let rec reverse = function
+    | [] -> []
+    | x::xs ->  reverse xs @ [x]
+
+  (* palindrome ['a';'b'] = ['a';'b';'b';'a'] *)
+  let palindrome a = a @ reverse a
+
+  (* optional first element. head [] = None, head [1;2] = Some 1 *)
+  let head = function
+    | [] -> None
+    | x::xs -> Some x
+
+  (* optional rest, after first element. tail [] = tail [1] = None, tail [1;2] = Some [2] *)
+  let rec tail = function
+    | [] -> None
+    | x::xs -> Some xs
+
+  (* optional last element. last [] = None, last [1;2] = Some 2 *)
+  let rec last = function
+    | [] -> None
+    | [x] -> Some x
+    | x::xs -> last xs 
+
   (* check whether argument is a palindrome *)
-  let is_palindrome = todo
+  let is_palindrome a = a = reverse a
+
   (* multiply each element with 2 *)
-  let times2 = todo
+  let rec times2 = function 
+    | [] -> []
+    | x::xs -> (2*x)::times2 xs
+
   (* result should only contain even numbers *)
-  let even = todo
+  let rec even = function
+    | [] -> []
+    | x::xs -> if x mod 2 = 0 then x::even xs else even xs
+
   (* at least one element must be true *)
-  let one = todo
+  let rec one = function
+    | [] -> false
+    | x::xs -> x || one xs
+
   (* all elements must be true. all [] = true. *)
-  let all = todo
+  let rec all = function
+    | [] -> true
+    | x::xs -> x && all xs
 end
 
 let (|?) a b = match a with Some x -> x | None -> b
 
 let () = 
-  print_endline (string_of_float (MyList.avgf [1.;2.3;4.21] |? 0.));
-  (* print_endline (string_of_float (MyList.sumf [1.;2.3;4.2])) *)
+  let a = MyList.all [true; true; true; true] in
+  let print_bool a = print_endline (string_of_bool a) in
+    print_bool a
+(* String.concat " " (List.map string_of_int a) *)
+(* print_endline (string_of_float (MyList.sumf [1.;2.3;4.2])) *)
 (*
 module NonEmptyList = struct
 type 'a t = Cons of 'a * 'a t | Nil of 'a
