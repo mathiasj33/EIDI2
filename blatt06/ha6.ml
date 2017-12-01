@@ -98,24 +98,22 @@ module NonEmptyList = struct
         | [] -> None
         | _ -> Some (aux a)
 
-  let to_list = todo
+  let rec to_list = function
+    | Nil x -> [x]
+    | Cons (x,t) -> x::to_list t
 
-  let head = todo
-  let tail = todo
-  let last = todo
+  let head = function 
+    | Nil x -> x
+    | Cons (x,t) -> x
+
+  let tail = function
+    | Nil x -> None
+    | Cons (x,t) -> Some t
+
+  let rec last = function
+    | Nil x -> x
+    | Cons (x,t) -> last t
 end
-
-let a = [1;2;3;4;5];;
-NonEmptyList.from_list a
-
-let (|?) a b = match a with Some x -> x | None -> b
-
-let () = 
-  let a = [1;2;3;4;5] in
-  let print_bool a = print_endline (string_of_bool a) in
-    print_bool a
-(* String.concat " " (List.map string_of_int a) *)
-(* print_endline (string_of_float (MyList.sumf [1.;2.3;4.2])) *)
 
 module Db = struct
   (* we assume that name is unique here *)
@@ -143,19 +141,75 @@ module Db = struct
   ]
 
   (* find a student by name *)
-  let find_student = todo
+  let find_student n =
+    let rec aux = function
+      | [] -> None
+      | x::xs -> if x.sname = n then Some x else aux xs
+    in 
+      aux students
 
   (* all averages are of type float option *)
   (* calculate the average age of students that are in a given semester or above *)
-  let avg_age = todo
+  let avg_age s =
+    let rec applying_ages = function
+      | [] -> []
+      | x::xs -> 
+          if x.semester >= s then x.age::applying_ages xs 
+          else applying_ages xs
+    in
+    let rec sum = function
+      | [] -> 0
+      | x::xs -> x+sum xs
+    in
+    let ages_list = applying_ages students
+    in
+      if ages_list = [] then None
+      else Some 
+             ((float_of_int (sum ages_list))
+              /.(float_of_int (MyList.length ages_list)))
+
+  let rec where pred = function
+    | [] -> []
+    | x::xs -> if pred x then x::(where pred xs) else where pred xs
+
+  let rec map f = function
+    | [] -> []
+    | x::xs -> (f x)::map f xs
+
   (* calculate the grade average of a student *)
-  let avg_grade_student = todo
+  let avg_grade_student n = 
+    let l = where (fun x -> x.student = n) grades
+    in
+      MyList.avgf (map (fun x -> x.grade) l)
+
   (* calculate the grade average of a course *)
-  let avg_grade_course = todo
+  let avg_grade_course n = 
+    let l = where (fun x -> x.course = n) grades 
+    in
+      MyList.avgf (map (fun x -> x.grade) l)
+
+  let (!!) = function
+    | None -> failwith "Impossible"
+    | Some x -> x
+
   (* calculate the grade average of a course for students in a given semester *)
-  let avg_grade_course_semester = todo
+  let avg_grade_course_semester c s = 
+    let pred g =
+      g.course = c &&
+      !!(find_student g.student).semester = s in
+    let l = where pred grades
+    in MyList.avgf (map (fun x -> x.grade) l)
+
 end
 
+let (|?) a b = match a with Some x -> x | None -> b
+
+let () = 
+  let a = [1;2;3;4;5] in
+  let print_bool a = print_endline (string_of_bool a) in
+    print_bool a
+(* String.concat " " (List.map string_of_int a) *)
+(* print_endline (string_of_float (MyList.sumf [1.;2.3;4.2])) *)
 
 module KdTree = struct
   type point = float list
