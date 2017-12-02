@@ -202,15 +202,6 @@ module Db = struct
 
 end
 
-let (|?) a b = match a with Some x -> x | None -> b
-
-let () = 
-  let a = [1;2;3;4;5] in
-  let print_bool a = print_endline (string_of_bool a) in
-    print_bool a
-(* String.concat " " (List.map string_of_int a) *)
-(* print_endline (string_of_float (MyList.sumf [1.;2.3;4.2])) *)
-
 module KdTree = struct
   type point = float list
   type kdtree = Empty | Leaf of point | Node of float * kdtree * kdtree
@@ -263,12 +254,62 @@ module KdTree = struct
       close_out out
 
 
+  let rec map f = function
+    | [] -> []
+    | x::xs -> (f x)::map f xs
+
+  let rec where pred = function
+    | [] -> []
+    | x::xs -> if pred x then x::where pred xs else where pred xs
+
+  let rec get_nth l n = match l with
+    | [] -> None
+    | x::xs -> if n = 0 then Some x else get_nth xs (n-1)
+
+  let (!!) = function
+    | None -> failwith "Impossible"
+    | Some x -> x
+
+  let (|?) a b = match a with Some x -> x | None -> b
+
+  let rec append a b = match a with
+    | [] -> b
+    | x::xs -> x::(append xs b)
+
+  let (@) = append (* infix operator for append *)
+
   (* kd_create : point list -> kdtree *)
-  let kd_create = todo
+  let kd_create lst = (* finde avg entlang counter mod k -Achse, alle die auf der Achse kleiner sind als linken Teilbaum, rest rechter Teilbaum *)
+    let dim = MyList.length ((get_nth lst 0) |? []) in
+    let rec aux axis l = 
+      if MyList.length l = 1 then Leaf (!!(get_nth l 0)) else
+        let avg = !!(MyList.avgf (map (fun e -> !!(get_nth e (axis-1))) l))
+        in let pred comp l = 
+          let v = !!(get_nth l (axis-1))
+          in comp v avg
+        in let left_l = where (pred (<)) l
+        in let right_l = where (pred (>=)) l
+        in let new_axis = (axis mod dim) + 1
+        in match left_l,right_l with
+          | [],[] -> failwith "Impossible"
+          | [],_ -> Node (avg, Empty, aux new_axis right_l)
+          | _,[] -> Node (avg, aux new_axis left_l, Empty)
+          | _,_ -> Node (avg, aux new_axis left_l, aux new_axis right_l)
+    in
+      if lst = [] then Empty else aux 1 lst
 
   (* kd_points : kdtree -> point list *)
-  let kd_points = todo
+  let rec kd_points = function
+    | Empty -> []
+    | Leaf p -> [p]
+    | Node (v,l,r) -> (kd_points l) @ (kd_points r)
 
   type aabb = point * point
 
+  let rec kd_points_in_aabb bb tree = (* in jeder dimension schauen welche Seite der Punkte im Würfel liegt und dann mit kd_points alle Punkte zurückgeben. *)
+
+end;;
+
+let t = KdTree.kd_create [[1.;1.];[2.;1.5];[1.;3.];[3.;3.5];[4.;2.];[5.;0.5];[4.5;4.];[6.;5.]];;
+KdTree.kd_points t
 
