@@ -306,10 +306,41 @@ module KdTree = struct
 
   type aabb = point * point
 
+  let rec in_aabb bb p = match p with
+    | [] -> true
+    | x::xs -> match bb with
+      | (b1::b1s, b2::b2s) -> 
+          if min b1 b2 <= x && x <= max b1 b2 then in_aabb (b1s,b2s) xs
+          else false
+      | (_,_) -> failwith "impossible"
+
   let rec kd_points_in_aabb bb tree = (* in jeder dimension schauen welche Seite der Punkte im Würfel liegt und dann mit kd_points alle Punkte zurückgeben. *)
+    let dim = MyList.length (fst bb) in
+    let rec aux axis t = match t with
+      | Empty -> []
+      | Leaf p -> if in_aabb bb p then [p] else []
+      | Node (v,l,r) -> 
+          let bb_axis = (!!(get_nth (fst bb) (axis-1)), 
+                         !!(get_nth (snd bb) (axis-1)))
+          in let min_bb = min (fst bb_axis) (snd bb_axis)
+          in let max_bb = max (fst bb_axis) (snd bb_axis)
+          in let new_axis = (axis mod dim) + 1
+          in
+            if v < min_bb then []
+            else if v = min_bb then aux new_axis r
+            else if v <= max_bb then (aux new_axis l) @ (aux new_axis r)
+            else [] (* v > max_bb *)
+    in 
+      match bb with
+        | [],[] -> []
+        | _,[] -> []
+        | [],_ -> []
+        | _,_ -> aux 1 tree
 
 end;;
 
-let t = KdTree.kd_create [[1.;1.];[2.;1.5];[1.;3.];[3.;3.5];[4.;2.];[5.;0.5];[4.5;4.];[6.;5.]];;
-KdTree.kd_points t
+let t = KdTree.kd_create [[3.;1.];[3.;4.];[4.;7.];[5.;6.];[7.;9.];[8.;4.];[11.;7.];[12.;5.];[14.;1.];[16.;8.]];;
+let bb = ([4.;3.], [16.;7.]);;
+KdTree.kd_points_in_aabb bb t;;
+KdTree.print_dot "C:/Users/Mathias/Kdtree/tree.dot" t
 
