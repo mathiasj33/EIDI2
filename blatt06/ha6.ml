@@ -6,16 +6,6 @@ module MyList = struct
     | [] -> 0
     | x::xs -> 1 + length xs
 
-  (* average of an int list as float *)
-  let rec avg l = 
-    let rec aux len = function
-      | [] -> 0.
-      | x::xs -> (float_of_int x) /. len +. aux len xs
-    in 
-      match l with
-        | [] -> None
-        | xs -> Some (aux (float_of_int (length xs)) xs)
-
   (* and for float list: *)
   let rec sumf = function
     | [] -> 0.
@@ -29,6 +19,19 @@ module MyList = struct
       match l with
         | [] -> None
         | xs -> Some (aux (float_of_int (length xs)) xs)
+
+  let rec map f = function
+    | [] -> []
+    | x::xs -> (f x)::map f xs
+
+  let rec sum = function
+    | [] -> 0
+    | x::xs -> x + sum xs
+
+  (* average of an int list as float *)
+  let avg = function
+    | [] -> None
+    | l -> Some ((float_of_int (sum l))/.(float_of_int (length l)))
 
   (* list concatenation, same as @ (will be undefined in the test environment!) *)
   let rec append a b = match a with
@@ -53,6 +56,7 @@ module MyList = struct
   (* optional rest, after first element. tail [] = tail [1] = None, tail [1;2] = Some [2] *)
   let rec tail = function
     | [] -> None
+    | [x] -> None
     | x::xs -> Some xs
 
   (* optional last element. last [] = None, last [1;2] = Some 2 *)
@@ -326,10 +330,10 @@ module KdTree = struct
           in let max_bb = max (fst bb_axis) (snd bb_axis)
           in let new_axis = (axis mod dim) + 1
           in
-            if v < min_bb then []
-            else if v = min_bb then aux new_axis r
+            if v <= min_bb then aux new_axis r
             else if v <= max_bb then (aux new_axis l) @ (aux new_axis r)
-            else [] (* v > max_bb *)
+            else if v > max_bb then aux new_axis l
+            else failwith "impossible"
     in 
       match bb with
         | [],[] -> []
@@ -337,10 +341,12 @@ module KdTree = struct
         | [],_ -> []
         | _,_ -> aux 1 tree
 
-end;;
+end
 
-let t = KdTree.kd_create [[3.;1.];[3.;4.];[4.;7.];[5.;6.];[7.;9.];[8.;4.];[11.;7.];[12.;5.];[14.;1.];[16.;8.]];;
-let bb = ([4.;3.], [16.;7.]);;
-KdTree.kd_points_in_aabb bb t;;
-KdTree.print_dot "C:/Users/Mathias/Kdtree/tree.dot" t
+
+(* let t = KdTree.kd_create [[3.;1.];[3.;4.];[4.;7.];[5.;6.];[7.;9.];[8.;4.];[11.;7.];[12.;5.];[14.;1.];[16.;8.]];;
+   let bb = ([4.;3.], [16.;7.]);;
+   KdTree.kd_points_in_aabb bb t;;
+   KdTree.print_dot "C:/Users/Mathias/Kdtree/tree.dot" t *)
+
 
