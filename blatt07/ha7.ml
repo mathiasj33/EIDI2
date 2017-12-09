@@ -136,9 +136,9 @@ and
   | While (cond, l) -> eval_while state cond l
 and
   eval_while state cond l = 
-  let new_state = eval_stmt_list state l in
-    if eval_cond new_state cond then eval_while new_state cond l
-    else new_state
+  if not (eval_cond state cond) then state else
+    let new_state = eval_stmt_list state l in
+      eval_while new_state cond l
 
 let eval_prog c p = 
   (eval_stmt_list (fun x -> if x = "arg" then c else 0) p) "ret"
@@ -161,19 +161,95 @@ let prog1 = [
 ]
 
 
-(* 7.5 - 2 *)
-let eval_cond = todo
-
-(* 7.5 - 3 *)
-let eval_stmt = todo
-
-(* 7.5 - 4 *)
-let eval_prog = todo
-
-
 (* Aufgabe 7.6: Jetzt wird's noch besser! *)
 (* 7.6 - 1 *)
-let pe_expr_opt = todo
+let rec match_not_equal left op right =
+  let real_op = 
+    (match op with Add -> (+) | Sub -> (-) | Mul -> ( * ) | Div -> (/)) in
+    match left with
+      | Const x -> 
+          begin 
+            match x with
+              | 0 -> 
+                  begin
+                    match op with
+                      | Add -> right
+                      | Sub -> 
+                          begin match right with
+                            | Const y -> Const (-y)
+                            | _ -> Unary (Neg, right)
+                          end
+                      | Mul -> Const 0
+                      | Div -> Const 0
+                  end
+              | 1 -> 
+                  begin 
+                    match op with
+                      | Mul -> right
+                      | _ -> 
+                          begin 
+                            match right with
+                              | Const y -> Const (1+y)
+                              | _ -> Binary (left, op, right)
+                          end
+                  end
+              | _ ->
+                  begin
+                    match right with
+                      | Const y -> if y = 0 && op = Div then Const 1 else Const (real_op x y)
+                      | _ -> Binary (left, op, right)
+                  end
+          end
+      | _ ->
+          begin 
+            match right with
+              | Const y -> 
+                  begin 
+                    match y with
+                      | 0 -> 
+                          begin
+                            match op with
+                              | Add -> left
+                              | Sub -> left
+                              | Mul -> Const 0
+                              | Div -> Const 1 (* laut Tests... *)
+                          end
+                      | 1 -> 
+                          begin 
+                            match op with
+                              | Mul -> left
+                              | Div -> left
+                              | _ -> Binary (left, op, right)
+                          end
+                      | _ -> Binary (left, op, right)
+                  end
+              | _ -> Binary (left, op, right)
+          end
+
+let rec pe_expr_opt = function
+  | Const x -> Const x
+  | Var x -> Var x
+  | Unary (Neg, x) ->
+      let opt = pe_expr_opt x in
+        begin match opt with
+          | Const a -> Const (-a)
+          | _ -> Unary (Neg, opt)
+        end
+  | Binary (e1, op, e2) ->
+      let left = pe_expr_opt e1 in
+      let right = pe_expr_opt e2 in
+        if left = right then
+          match op with
+            | Sub -> Const 0
+            | Div -> Const 1
+            | _ -> match_not_equal left op right
+        else match_not_equal left op right
+
+(*
+;;
+pe_expr_opt (Binary(Var "x", Mul, Binary (Var "t", Sub, Var "t")));;
+pe_expr_opt (Binary (Const 0, Mul, Var "x"))*)
+
 let pe_cond_opt = todo
 let pe_opt = todo
 
@@ -181,6 +257,12 @@ let pe_opt = todo
 let dce_opt = todo
 
 (* 7.6 - 3 *)
+(*let test_prog = [
+  Assign ("x", Binary (Const 5, Add, Const 10));
+  Assign ("y", Binary (Const 5, Add, Const 0));
+  Assign ("y", Binary (Var "x", Mul, Const 0));
+  Assign ("y", Binary (Var "x", Sub, Var "x"));
+  ] *)
 let opt = todo
 
 
