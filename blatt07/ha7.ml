@@ -250,11 +250,119 @@ let rec pe_expr_opt = function
 pe_expr_opt (Binary(Var "x", Mul, Binary (Var "t", Sub, Var "t")));;
 pe_expr_opt (Binary (Const 0, Mul, Var "x"))*)
 
-let pe_cond_opt = todo
-let pe_opt = todo
+let rec pe_cond_opt = function
+  | True -> True
+  | False -> False
+  | Comp (e1, op, e2) ->
+      let left = pe_expr_opt e1 in
+      let right = pe_expr_opt e2 in
+        begin match left with
+          | Const l ->
+              begin match right with
+                | Const r ->
+                    if (match op with Eq -> (=) | Neq -> (<>) | Le -> (<) | Leq -> (<=)) l r then True else False
+                | _ -> Comp (left, op, right)
+              end
+          | _ -> Comp (left, op, right)
+        end
+  | Not c -> 
+      let opt = pe_cond_opt c in
+        begin match opt with True -> False | False -> True | _ -> Not opt
+        end
+  | And (c1, c2) ->
+      let left = pe_cond_opt c1 in
+      let right = pe_cond_opt c2 in
+        begin match left with
+          | False -> False
+          | True -> right
+          | _ -> 
+              begin match right with
+                | False -> False
+                | True -> left
+                | _ -> And (left, right)
+              end
+        end
+  | Or (c1, c2) ->
+      let left = pe_cond_opt c1 in
+      let right = pe_cond_opt c2 in
+        begin match left with
+          | False -> right
+          | True -> True
+          | _ ->
+              begin match right with
+                | False -> left
+                | True -> True
+                | _ -> Or (left, right)
+              end
+        end
+
+let rec pe_opt p = 
+  let rec aux acc = function
+    | [] -> List.rev acc
+    | x::xs -> 
+        begin match x with
+          | Assign (v,e) -> aux (Assign(v,pe_expr_opt e)::acc) xs
+          | Print v -> aux (Print(v)::acc) xs
+          | IfThenElse (c,s1,s2) ->
+              aux (IfThenElse(pe_cond_opt c, pe_opt s1, pe_opt s2)::acc) xs
+          | While (c,s) ->
+              aux (While(pe_cond_opt c, pe_opt s)::acc) xs
+        end
+  in aux [] p
+
+let rec used_in_expr s = function
+  | Const c -> false
+  | Var v -> v = s
+  | Unary (_, e) -> used_in_expr s e
+  | Binary (e1, _, e2) -> used_in_expr s e1 || used_in_expr s e2
+
+let rec used_in_cond s = function
+  | True -> false
+  | False -> false
+  | Comp (e1, op, e2) -> used_in_expr s e1 || used_in_expr s e2
+  | Not c -> used_in_cond s c
+  | And (c1, c2) -> used_in_cond s c1 || used_in_cond s c2
+  | Or (c1, c2) -> used_in_cond s c1 || used_in_cond s c2
+
+let rec used s = function
+  | [] -> false
+  | x::xs -> 
+      begin match x with
+        | Assign (v,e) -> used_in_expr s e || used s xs
+        | Print v -> if v = s then true else used s xs
+        | IfThenElse (c,s1,s2) -> 
+            used_in_cond s c || used s s1 || used s s2 || used s xs
+        | While (c,s1) -> used_in_cond s c || used s s1 || used s xs
+      end
 
 (* 7.6 - 2 *)
-let dce_opt = todo
+let rec dce_opt p =
+  let rec aux acc = function
+    | [] -> List.rev acc
+    | x::xs ->
+        begin match x with
+          | Assign (v,e) -> 
+              begin match v with
+                | "ret" -> aux (x::acc) xs
+                | s -> if not (used s p) then aux acc xs
+                    else aux (x::acc) xs
+              end
+          | Print _ -> aux (x::acc) xs
+          | IfThenElse (c,s1,s2) ->
+              begin match c with
+                | True -> aux ((dce_opt s1) @ acc) xs
+                | False -> aux ((dce_opt s2) @ acc) xs
+                | _ -> aux (x::acc) xs
+              end
+          | While (c, s1) ->
+              begin match c with
+                | False -> aux acc xs
+                | _ -> aux (x::acc) xs
+              end
+        end
+  in aux [] p 
+
+
 
 (* 7.6 - 3 *)
 (*let test_prog = [
@@ -263,6 +371,12 @@ let dce_opt = todo
   Assign ("y", Binary (Var "x", Mul, Const 0));
   Assign ("y", Binary (Var "x", Sub, Var "x"));
   ] *)
-let opt = todo
+let rec opt p = 
+  if p = pe_opt p then
+    if p = dce_opt p then
+      p
+    else 
+      opt (dce_opt p)
+  else opt (pe_opt p)
 
 
