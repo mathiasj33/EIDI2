@@ -163,7 +163,53 @@ let dijkstra start graph =
   in process [] [start] [] (init_dists start graph)
 
 (* 8.6 - 1 *)
-let check_coloring = todo
+let rec check_coloring c graph = 
+  let rec aux = function
+    | [] -> true
+    | x::xs ->
+        if not (List.mem_assoc x c) then false
+        else
+        if not 
+             (List.for_all (fun n -> (List.mem_assoc n c) && ((List.assoc n c)<>(List.assoc x c)))
+                (List.map (fun (n,w) -> n) (adjacent_nodes x graph))) then false
+        else aux xs
+  in
+    aux (nodes graph)
+
+
+let sort_nodes_by_degree nodes degrees =
+  List.sort (fun n1 n2 -> 
+              let comp = (List.assoc n1 degrees) - (List.assoc n2 degrees) in
+                if comp < 0 then 1 else if comp > 0 then -1 else 0) nodes
+
+let degrees graph = 
+  let rec aux = function
+    | [] -> []
+    | x::xs ->
+        (x, List.length (adjacent_nodes x graph))::(aux xs)
+  in
+    aux (nodes graph)
+
+let choose_first_not_in color_list =
+  let rec aux i =
+    if (List.exists (fun e -> e=i) color_list) then aux (i+1) else i
+  in aux 0
+
+let print_list l = 
+  print_endline (String.concat " " (List.map string_of_int l))
 
 (* 8.6 - 2 *)
-let do_coloring = todo
+let do_coloring graph =
+  let rec aux (c:coloring) = function
+    | [] -> c
+    | x::xs ->
+        let neighbor_colors =
+          let neighbor_nodes = List.map (fun (n,w) -> n) (adjacent_nodes x graph) in
+            List.filter (fun e -> e >= 0) (List.map (fun n -> if List.mem_assoc n c then List.assoc n c else -1) neighbor_nodes) in
+        let color = choose_first_not_in neighbor_colors in
+          aux ((x,color)::c) xs
+  in
+    aux [] (sort_nodes_by_degree (nodes graph) (degrees graph))
+
+;;
+do_coloring [(1,2.40,2)]
