@@ -340,7 +340,6 @@ module KdTree = struct
         | _,[] -> []
         | [],_ -> []
         | _,_ -> aux 1 tree
-
 end
 
 

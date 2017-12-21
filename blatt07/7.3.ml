@@ -7,7 +7,7 @@ let rec fold_left f a = function
 let sum t = fold_left (+) 0 t;;
 
 let to_list t = List.rev (fold_left (fun a e -> e::a) [] t);;
-(*let to_list t = fold_left (fun a e -> a::e) [] t;;*)
+(* oder: let to_list t = fold_left (fun z x -> z @ [x]) [] t *)
 
 let t = Node(2, Node(1, Leaf, Leaf), Node(3, Leaf, Leaf));;
 to_list t;;
