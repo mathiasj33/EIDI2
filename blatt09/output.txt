@@ -1,0 +1,5 @@
+fritze=2
+fischers=2
+fischt=2
+fische=2
+frische=2
