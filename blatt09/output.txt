@@ -1,3 +1,7 @@
+ausserdem=2
+schoen=1
+ich=3
+bin=1
 fritze=2
 fischers=2
 fischt=2

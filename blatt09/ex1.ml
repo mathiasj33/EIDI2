@@ -1,7 +1,4 @@
-#load "str.cma";;
-
 let process_line freq_map line =
-  print_endline line;
   let word_list = List.map String.lowercase (Str.split (Str.regexp "[^a-zA-Z]") line) in
   let process_word z s = if (List.mem_assoc s z) then (s, 1+(List.assoc s z))::(List.remove_assoc s z) else (s, 1)::z in
     List.fold_left process_word freq_map word_list
@@ -22,8 +19,5 @@ let do_statistics i o =
     let output = open_out o in
       print_output output freq_map; close_out output
 
-
-;;
-do_statistics "eingabe.txt" "output.txt"
-
-
+let () = 
+  do_statistics "eingabe.txt" "output.txt"
