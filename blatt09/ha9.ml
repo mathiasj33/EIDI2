@@ -1,5 +1,3 @@
-
-
 let todo _ = failwith "TODO"
 
 let (!!) = function
@@ -66,9 +64,26 @@ type charmap = (char * int) list
 type huffman_tree = Node of int * huffman_tree * huffman_tree | Leaf of (char * int)
 type codebook = (char * string) list
 
-let construct_charmap = todo
+let construct_charmap input =
+  let rec process_char i map =
+    if i = String.length input then map else
+    let c = input.[i] in
+    if List.mem_assoc c map then
+      let updated_list = (c, 1 + (List.assoc c map))::(List.remove_assoc c map) in
+      process_char (i+1) updated_list
+    else process_char (i+1) ((c, 1)::map)
+  in process_char 0 []
 
-let construct_tree = todo
+let construct_initial_trees cm =
+  let rec aux trees cm = match cm with
+    | [] -> trees
+    | x::xs -> aux ((Leaf x)::trees) xs
+  in aux [] cm
+
+let construct_tree cm = 
+  let rec aux trees = 
+
+  in aux (construct_initial_trees cm)
 
 let construct_codebook = todo
 
