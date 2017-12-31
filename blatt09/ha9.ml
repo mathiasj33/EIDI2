@@ -80,13 +80,88 @@ let construct_initial_trees cm =
     | x::xs -> aux ((Leaf x)::trees) xs
   in aux [] cm
 
-let construct_tree cm = 
-  let rec aux trees = 
+let rec height = function
+  | Leaf _ -> 1
+  | Node (_, t1, t2) -> 1 + (max (height t1) (height t2))
 
+let tree_comp = 
+  fun t1 t2 ->
+    let x1 = match t1 with
+              | Node (x, _, _) -> x
+              | Leaf (_, x) -> x
+    in
+    let x2 = match t2 with
+              | Node (x, _, _) -> x
+              | Leaf (_, x) -> x
+    in
+    if x1 <> x2 then x1 - x2
+    else
+    (height t1) - (height t2)
+
+let sort_trees trees =
+  List.sort tree_comp trees
+
+let merge t1 t2 =
+  let tmp = List.sort tree_comp [t1; t2] in
+  let left = List.hd tmp in
+  let right = List.nth tmp 1 in
+  let xl = match left with
+            | Node (x, _, _) -> x
+            | Leaf (_, x) -> x
+  in
+  let xr = match right with
+            | Node (x, _, _) -> x
+            | Leaf (_, x) -> x
+  in
+  Node (xl+xr, left, right)
+
+let construct_tree cm =
+  let rec aux trees =
+    if List.length trees = 1 then List.hd trees else
+    let trees = sort_trees trees in
+    let t1 = List.hd trees in
+    let trees = List.tl trees in
+    let t2 = List.hd trees in
+    let trees = List.tl trees in
+    let new_tree = merge t1 t2 in
+    aux (new_tree::trees)
   in aux (construct_initial_trees cm)
 
-let construct_codebook = todo
+let rec prepend p = function
+    | [] -> []
+    | (c,s)::xs -> ((c, p^s))::(prepend p xs)
 
-let encode = todo
+let rec construct_codebook = function
+    | Leaf _ -> failwith "impossible"
+    | Node (_, l, r) ->
+      let cbl =
+        (match l with
+          | Leaf (c, i) -> [(c, "0")]
+          | Node _ -> prepend "0" (construct_codebook l)
+        ) in
+      let cbr = 
+        (match r with
+          | Leaf (c, i) -> [(c, "1")]
+          | Node _ -> prepend "1" (construct_codebook r)
+        ) in
+      List.append cbl cbr
 
-let decode = todo
+let encode input =
+  let cb = construct_codebook (construct_tree (construct_charmap input)) in
+  let rec aux i =
+    if i = String.length input then "" else
+    (List.assoc input.[i] cb) ^ (aux (i+1))
+  in (cb, aux 0)
+
+let rec flip_codebook = function
+    | [] -> []
+    | (a,b)::xs -> (b,a)::(flip_codebook xs)
+
+let decode (cb, input) = 
+  let cb = flip_codebook cb in
+  let rec aux i buf =
+    if i = String.length input then "" else
+    let buf = buf ^ (String.make 1 input.[i]) in
+    if List.mem_assoc buf cb then (String.make 1 (List.assoc buf cb)) ^ (aux (i+1) "") else
+    aux (i+1) buf
+  in aux 0 ""
