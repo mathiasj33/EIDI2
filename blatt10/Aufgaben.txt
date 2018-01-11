@@ -1,0 +1,7 @@
+10.1
+    Funktor: Erweitern von Modulen (nicht alle Module anpassen um neue Funktion einzufügen -> bisschen ähnlich wie Vererbung)
+    Map1, Map2: Funktor
+    Types z.B.:
+        type ('k * 'v) t = ('k * 'v) list
+        type 'v t = (K.t * 'v) list
+        type t = (K.t * V.t) list
