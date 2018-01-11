@@ -29,8 +29,16 @@ module PolynomeBitGenerator:BitGenerator = struct
     let i3 = (t lsr 24) land 1 in
     let i4 = (t lsr 29) land 1 in
     let v = i1 lxor (i2 lxor (i3 lxor i4)) in
-    (v=1, (v lsl 1) lor v)
+    (v=1, (t lsl 1) lor v)
 end
+
+let print_bools () =
+  let t = PolynomeBitGenerator.init 0b00_1_1000_1_000000_1_0000000000000_1_001 in
+  let rec print_first_n t n c =
+    let (v, newt) = PolynomeBitGenerator.next t in
+    print_endline (string_of_bool v);
+    if c >= n then () else print_first_n newt n (c+1)
+  in print_first_n t 5 0
 
 module MakeNumberGenerator (G:BitGenerator):NumberGenerator = struct
   type t = G.t
@@ -71,18 +79,12 @@ end
 
 module RNG2 = ExtendNumberGenerator (MakeNumberGenerator (PolynomeBitGenerator))
 
-let print_bools () =
-  let t = AlternatingBitGenerator.init 0b00001001000000101000000000001100 in
+let print_numbers () =
+  let t = RNG2.init 10 in
   let rec print_first_n t n c =
-    let (v, newt) = AlternatingBitGenerator.next t in
-    print_endline (string_of_bool v);
-    if c >= n then () else print_first_n newt n (c+1)
+    let (v, t) = RNG2.get_float 40000000 100000000 1 t in
+    print_endline (string_of_float v);
+    if c >= n then () else print_first_n t n (c+1)
   in print_first_n t 20 0
 
-let print_numbers () =
-  let t = RNG1.init 12301 in
-  let rec print_first_n t n c =
-    let (v, newt) = RNG1.next t in
-    print_endline (string_of_int v);
-    if c >= n then () else print_first_n newt n (c+1)
-  in print_first_n t 20 0
+let () = print_numbers ()
