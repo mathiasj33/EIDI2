@@ -54,7 +54,10 @@ let update_db db line =
 let read_db_from_csv filename = 
   let file = open_in filename in
   let rec create_db db = 
-    try create_db (update_db db (input_line file))
+    try 
+      let line = input_line file in
+      let db = update_db db line in
+      create_db db
     with End_of_file -> db in
   create_db {students = []; courses = []; grades = []}
 
