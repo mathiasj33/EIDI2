@@ -32,14 +32,6 @@ module PolynomeBitGenerator:BitGenerator = struct
     (v=1, (t lsl 1) lor v)
 end
 
-let print_bools () =
-  let t = PolynomeBitGenerator.init 0b00_1_1000_1_000000_1_0000000000000_1_001 in
-  let rec print_first_n t n c =
-    let (v, newt) = PolynomeBitGenerator.next t in
-    print_endline (string_of_bool v);
-    if c >= n then () else print_first_n newt n (c+1)
-  in print_first_n t 5 0
-
 module MakeNumberGenerator (G:BitGenerator):NumberGenerator = struct
   type t = G.t
   let init seed = G.init seed
@@ -78,13 +70,3 @@ module ExtendNumberGenerator (G:NumberGenerator) = struct
 end
 
 module RNG2 = ExtendNumberGenerator (MakeNumberGenerator (PolynomeBitGenerator))
-
-let print_numbers () =
-  let t = RNG2.init 10 in
-  let rec print_first_n t n c =
-    let (v, t) = RNG2.get_float 40000000 100000000 1 t in
-    print_endline (string_of_float v);
-    if c >= n then () else print_first_n t n (c+1)
-  in print_first_n t 20 0
-
-let () = print_numbers ()
