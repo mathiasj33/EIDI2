@@ -1,0 +1,1 @@
+let () = print_int 5; flush stdout
